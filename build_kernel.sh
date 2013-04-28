@@ -27,7 +27,9 @@ export TOOLBIN="${KERNELDIR}/../bin"
 export INITRAMFS_SOURCE="${KERNELDIR}/../initramfs"
 export INITRAMFS_TMP="/tmp/initramfs-i9505"
 export RELEASEDIR="${KERNELDIR}/../releases"
+# Target
 export DREAM_DEFCONF=dream_i9505_defconfig
+export ARCH_CONF=jf_eur_defconfig
 
 # get time of startup
 time_start=$(date +%s.%N)
@@ -68,6 +70,9 @@ then
   fi
 fi
 
+# make sure we have no stale config
+make -j8 distclean 2>&1 | grcat conf.gcc
+
 if [ ! -f $KERNELDIR/.config ];
 then
   if [ ! -f $KERNELDIR/arch/arm/configs/$DREAM_DEFCONF ];
@@ -84,7 +89,7 @@ then
     exit 1
   fi
   echo -e "${TXTYLW}Creating Kernel config from default: ${DREAM_DEFCONF} ${TXTCLR}"
-  make ARCH=arm VARIANT_DEFCONFIG=jf_eur_defconfig ${DREAM_DEFCONF}  2>&1 | grcat conf.gcc
+  make ARCH=arm VARIANT_DEFCONFIG=${ARCH_CONF} ${DREAM_DEFCONF}  2>&1 | grcat conf.gcc
   echo -e "${TXTYLW}Kernel config created ...${TXTCLR}"
 fi
 
