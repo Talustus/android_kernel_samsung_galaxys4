@@ -14,7 +14,7 @@ TXTCLR='\e[0m'    		# Text Reset
 #
 
 ## Create TAR File for ODIN?
-ODIN_TAR=no		# yes/no
+ODIN_TAR=yes		# yes/no
 
 ## Create ZIP File for CWM? (needs a updater-template.zip in releasedir)
 CWM_ZIP=no		# yes/no
