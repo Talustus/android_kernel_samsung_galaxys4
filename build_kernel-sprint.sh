@@ -29,7 +29,7 @@ export INITRAMFS_TMP="/tmp/initramfs-s4sprint"
 export RELEASEDIR="${KERNELDIR}/../releases"
 # Target
 export DREAM_DEFCONF=dream_sprint_defconfig
-export ARCH_CONF=jf_spr_defconf
+export ARCH_CONF=jf_spr_defconfig
 
 # get time of startup
 time_start=$(date +%s.%N)
