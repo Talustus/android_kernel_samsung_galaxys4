@@ -17,7 +17,7 @@ TXTCLR='\e[0m'    		# Text Reset
 ODIN_TAR=yes		# yes/no
 
 ## Create ZIP File for CWM? (needs a updater-template.zip in releasedir)
-CWM_ZIP=no		# yes/no
+CWM_ZIP=yes		# yes/no
 
 ##
 ## Directory Settings
@@ -27,9 +27,12 @@ export TOOLBIN="${KERNELDIR}/../bin"
 export INITRAMFS_SOURCE="${KERNELDIR}/../initramfs"
 export INITRAMFS_TMP="/tmp/initramfs-i9505"
 export RELEASEDIR="${KERNELDIR}/../releases"
-# Target
+
+# Target Configs ...
 export DREAM_DEFCONF=dream_i9505_defconfig
 export ARCH_CONF=jf_eur_defconfig
+export SELINUX_CONF=jfselinux_defconfig
+export SELINUX_LOGCONF=jfselinux_log_defconfig
 
 # get time of startup
 time_start=$(date +%s.%N)
@@ -89,7 +92,8 @@ then
     exit 1
   fi
   echo -e "${TXTYLW}Creating Kernel config from default: ${DREAM_DEFCONF} ${TXTCLR}"
-  make ARCH=arm VARIANT_DEFCONFIG=${ARCH_CONF} ${DREAM_DEFCONF}  2>&1 | grcat conf.gcc
+  # make ARCH=arm VARIANT_DEFCONFIG=${ARCH_CONF} SELINUX_DEFCONFIG=${SELINUX_CONF} SELINUX_LOG_DEFCONFIG=${SELINUX_LOGCONF} ${DREAM_DEFCONF}  2>&1 | grcat conf.gcc
+  make ARCH=arm VARIANT_DEFCONFIG=${ARCH_CONF} SELINUX_DEFCONFIG=${SELINUX_CONF} ${DREAM_DEFCONF}  2>&1 | grcat conf.gcc
   echo -e "${TXTYLW}Kernel config created ...${TXTCLR}"
 fi
 
@@ -98,7 +102,7 @@ fi
 # remove Files of old/previous Builds
 #
 echo -e "${TXTYLW}Deleting Files of previous Builds ...${TXTCLR}"
-make -j8 clean 2>&1 | grcat conf.gcc
+# make -j8 clean 2>&1 | grcat conf.gcc
 # echo "0" > $KERNELDIR/.version
 
 # Remove Old initramfs
