@@ -51,14 +51,14 @@ export KBUILD_BUILD_HOST=`hostname | sed 's|ip-projects.de|dream-irc.com|g'`
 # Version of this Build
 #
 ## 1.0 for initial build
-KRNRLS="DreamKernel-GT-I9505-v1.0.2TW"
+KRNRLS="DreamKernel-GT-I9505-v1.0.2TW3"
 
 
 #
 # Target Settings
 #
 export ARCH=arm
-export CROSS_COMPILE=/home/talustus/arm-galaxys4-androideabi/bin/galaxys4-
+export CROSS_COMPILE=/home/talustus/arm-galaxys4-androideabi-dev/bin/galaxys4-
 export USE_SEC_FIPS_MODE=true
 
 if [ "${1}" != "" ];
