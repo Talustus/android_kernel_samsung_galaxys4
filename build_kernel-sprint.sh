@@ -13,23 +13,44 @@ TXTCLR='\e[0m'    		# Text Reset
 ## Settings
 #
 
+#
+## Version of this Build
+#
+## 1.0 for initial build
+KRNRLS="DreamKernel-SPH-L720-v1.0.5TW"
+
+#
 ## Create TAR File for ODIN?
-ODIN_TAR=yes		# yes/no
+#
+ODIN_TAR=no		# yes/no (Currently disabled due modules not included in boot.img)
 
+#
 ## Create ZIP File for CWM? (needs a updater-template.zip in releasedir)
-CWM_ZIP=no		# yes/no
+#
+CWM_ZIP=yes		# yes/no
 
-##
+#
 ## Directory Settings
-##
+#
 export KERNELDIR=`readlink -f .`
 export TOOLBIN="${KERNELDIR}/../bin"
 export INITRAMFS_SOURCE="${KERNELDIR}/../initramfs-sprint"
-export INITRAMFS_TMP="/tmp/initramfs-s4sprint"
+export INITRAMFS_TMP="/tmp/initramfs-l720"
 export RELEASEDIR="${KERNELDIR}/../releases"
-# Target
-export DREAM_DEFCONF=dream_sprint_defconfig
+
+#
+## For CWM ZIP
+#
+export UPDATER_TEMPLATE=${KERNELDIR}/../releases/updater-template
+export UPDATER_TMP=/tmp/updater-template-l720
+
+#
+## Target Configs ...
+#
+export DREAM_DEFCONF=dream_l720_defconfig
 export ARCH_CONF=jf_spr_defconfig
+export SELINUX_CONF=jfselinux_defconfig
+export SELINUX_LOGCONF=jfselinux_log_defconfig
 
 # get time of startup
 time_start=$(date +%s.%N)
@@ -37,21 +58,16 @@ time_start=$(date +%s.%N)
 # InitRamFS Branch to use ...
 # export RAMFSBRANCH=cm10-testing
 
-# Build Hostname
+#
+## Build Hostname
+#
 export KBUILD_BUILD_HOST=`hostname | sed 's|ip-projects.de|dream-irc.com|g'`
 
 #
-# Version of this Build
-#
-## 1.0 for initial build
-KRNRLS="DreamKernel-S4-Sprint-v1.0.0"
-
-
-#
-# Target Settings
+## Target Settings
 #
 export ARCH=arm
-export CROSS_COMPILE=/home/talustus/arm-galaxys2-androideabi/bin/galaxys2-
+export CROSS_COMPILE=/home/talustus/arm-galaxys4-androideabi-dev/bin/galaxys4-
 export USE_SEC_FIPS_MODE=true
 
 if [ "${1}" != "" ];
@@ -65,7 +81,7 @@ then
     echo -e "${BLDRED}Nothing todo, Exiting ... !${TXTCLR}"
     # finished? get elapsed time
     time_end=$(date +%s.%N)
-    echo -e "${BLDYLW}Total time elapsed: ${TCTCLR}${TXTGRN}$(echo "($time_end - $time_start) / 60"|bc ) ${TXTYLW}minutes${TXTGRN} ($(echo "$time_end - $time_start"|bc ) ${TXTYLW}seconds) ${TXTCLR}"
+    echo -e "${BLDYLW}Total time elapsed: ${TXTGRN}$(echo "($time_end - $time_start) / 60"|bc ) ${TXTYLW}minutes${TXTGRN} ($(echo "$time_end - $time_start"|bc ) ${TXTYLW}seconds) ${TXTCLR}"
     exit 1
   fi
 fi
@@ -84,12 +100,13 @@ then
     echo -e "  "
     # finished? get elapsed time
     time_end=$(date +%s.%N)
-    echo -e "${BLDYLW}Total time elapsed: ${TCTCLR}${TXTGRN}$(echo "($time_end - $time_start) / 60"|bc ) ${TXTYLW}minutes${TXTGRN} ($(echo "$time_end - $time_start"|bc ) ${TXTYLW}seconds) ${TXTCLR}"
+    echo -e "${BLDYLW}Total time elapsed: ${TXTGRN}$(echo "($time_end - $time_start) / 60"|bc ) ${TXTYLW}minutes${TXTGRN} ($(echo "$time_end - $time_start"|bc ) ${TXTYLW}seconds) ${TXTCLR}"
     echo -e "  "
     exit 1
   fi
   echo -e "${TXTYLW}Creating Kernel config from default: ${DREAM_DEFCONF} ${TXTCLR}"
-  make ARCH=arm VARIANT_DEFCONFIG=${ARCH_CONF} ${DREAM_DEFCONF}  2>&1 | grcat conf.gcc
+  # make ARCH=arm VARIANT_DEFCONFIG=${ARCH_CONF} SELINUX_DEFCONFIG=${SELINUX_CONF} SELINUX_LOG_DEFCONFIG=${SELINUX_LOGCONF} ${DREAM_DEFCONF}  2>&1 | grcat conf.gcc
+  make ARCH=arm VARIANT_DEFCONFIG=${ARCH_CONF} SELINUX_DEFCONFIG=${SELINUX_CONF} ${DREAM_DEFCONF}  2>&1 | grcat conf.gcc
   echo -e "${TXTYLW}Kernel config created ...${TXTCLR}"
 fi
 
@@ -98,13 +115,33 @@ fi
 # remove Files of old/previous Builds
 #
 echo -e "${TXTYLW}Deleting Files of previous Builds ...${TXTCLR}"
-make -j8 clean 2>&1 | grcat conf.gcc
+# make -j8 clean 2>&1 | grcat conf.gcc
 # echo "0" > $KERNELDIR/.version
 
-# Remove Old initramfs
-echo -e "${TXTYLW}Deleting old InitRAMFS${TXTCLR}"
-rm -rf $INITRAMFS_TMP
-rm -rf $INITRAMFS_TMP.*
+# Remove Old initramfs/updater template
+if [ -d $UPDATER_TMP ];
+then
+  echo -e "${TXTYLW}Deleting old updater template${TXTCLR}"
+  rm -rf $UPDATER_TMP
+fi
+
+if [ -d $INITRAMFS_TMP ];
+then
+  echo -e "${TXTYLW}Deleting old initramfs temp files${TXTCLR}"
+  rm -rf $INITRAMFS_TMP
+fi
+
+if [ -f $INITRAMFS_TMP.cpio ];
+then
+  echo -e "${TXTYLW}Deleting old initramfs cpio Archive${TXTCLR}"
+  rm -f $INITRAMFS_TMP.cpio
+fi
+
+if [ -f $INITRAMFS_TMP.img ];
+then
+  echo -e "${TXTYLW}Deleting old initramfs image${TXTCLR}"
+  rm -f $INITRAMFS_TMP.img
+fi
 
 # Remove previous Kernelfiles
 if [ -f $KERNELDIR/boot.img ];
@@ -116,28 +153,8 @@ then
   rm $KERNELDIR/arch/arm/boot/zImage
 fi
 
-# Start the Build
+## INITRAMFS ##
 #
-# clear
-echo -e "${TXTYLW}CleanUP done, starting modules Build ...${TXTCLR}"
-
-nice -n 10 make -j8 modules 2>&1 | grcat conf.gcc
-
-#
-if [ "$?" == "0" ];
-then
-  echo -e "${TXTYLW}Modules Build done ...${TXTCLR}"
-  sleep 2
-else
-  echo -e "${BLDRED}Modules Build failed, exiting  ...${TXTCLR}"
-    # finished? get elapsed time
-    time_end=$(date +%s.%N)
-    echo -e "${BLDYLW}Total time elapsed: ${TCTCLR}${TXTGRN}$(echo "($time_end - $time_start) / 60"|bc ) ${TXTYLW}minutes${TXTGRN} ($(echo "$time_end - $time_start"|bc ) ${TXTYLW}seconds) ${TXTCLR}"
-  exit 1
-fi
-
-echo -e "${TXTGRN}Build: Stage 1 successfully completed${TXTCLR}"
-
 # copy initramfs files to tmp directory
 #
 echo -e "${TXTGRN}Copying initramfs Filesystem to: ${INITRAMFS_TMP}${TXTCLR}"
@@ -151,22 +168,11 @@ find $INITRAMFS_TMP -name .git -exec rm -rf {} \;
 find $INITRAMFS_TMP -name EMPTY_DIRECTORY -exec rm -rf {} \;
 rm -rf $INITRAMFS_TMP/.hg
 
-# copy modules into initramfs
-#
-echo -e "${TXTGRN}Copying Modules to initramfs: ${INITRAMFS_TMP}/lib/modules${TXTCLR}"
-
-mkdir -pv $INITRAMFS_TMP/lib/modules
-find $KERNELDIR -name '*.ko' -exec cp -av {} $INITRAMFS_TMP/lib/modules/ \;
-sleep 1
-
-echo -e "${TXTGRN}Striping Modules to save space${TXTCLR}"
-${CROSS_COMPILE}strip --strip-unneeded $INITRAMFS_TMP/lib/modules/*
-sleep 1
-
 # create the initramfs cpio archive
 #
 $TOOLBIN/mkbootfs $INITRAMFS_TMP > $INITRAMFS_TMP.cpio
 echo -e "${TXTGRN}Unpacked Initramfs: $(ls -lh $INITRAMFS_TMP.cpio)${TXTCLR}"
+echo "  "
 
 # Create gziped initramfs
 #
@@ -174,93 +180,158 @@ echo -e "${TXTGRN}compressing InitRamfs...${TXTCLR}"
 $TOOLBIN/minigzip < $INITRAMFS_TMP.cpio > $INITRAMFS_TMP.img
 echo -e "${TXTGRN}Final gzip compressed Initramfs: $(ls -lh $INITRAMFS_TMP.img)${TXTCLR}"
 
-sleep 1
+# delete temp initramfs files/dirs
+#
+echo "  "
+echo -e "${TXTGRN}Deleting Temp DIR/CPIO: ($INITRAMFS_TMP)${TXTCLR}"
+rm -rf $INITRAMFS_TMP
 
-# Start Final Kernel Build
+echo -e "${TXTGRN}Deleting Temp cpio Archive: ($INITRAMFS_TMP.cpio)${TXTCLR}"
+rm -f $INITRAMFS_TMP.cpio
+
+## Start Final Kernel Build
 #
 echo -e "${TXTYLW}Starting final Build: Stage 2${TXTCLR}"
+
+## Build zImage
 nice -n 10 make -j8 zImage 2>&1 | grcat conf.gcc
 
 if [ -f  $KERNELDIR/arch/arm/boot/zImage ];
 then
-  echo -e "${TXTGRN}Kernel Image compiled succesfull, Build Stage 2 completed!${TXTCLR}"
+  cp $KERNELDIR/arch/arm/boot/zImage $KERNELDIR/arch/arm/boot/kernel
+  echo -e "${TXTGRN}Kernel Image compiled succesfull, Build Stage 1 completed!${TXTCLR}"
   echo " "
-  echo -e "${TXTGRN}Final Build: Stage 3. Creating bootimage !${TXTCLR}"
+  echo -e "${TXTGRN}Build: Stage 2. compiling Modules !${TXTCLR}"
   echo " "
   sleep 1
-  cp $KERNELDIR/arch/arm/boot/zImage $KERNELDIR/arch/arm/boot/kernel
+else
+  echo " "
+  echo -e "${BLDRED}Final Build: Stage 1 failed with Error!${TXTCLR}"
+  echo -e "${BLDRED}failed to build Kernel Image, exiting ...${TXTCLR}"
+  echo " "
+  # finished? get elapsed time
+  time_end=$(date +%s.%N)
+  echo -e "${BLDYLW}Total time elapsed: ${TXTGRN}$(echo "($time_end - $time_start) / 60"|bc ) ${TXTYLW}minutes${TXTGRN} ($(echo "$time_end - $time_start"|bc ) ${TXTYLW}seconds) ${TXTCLR}"
+  exit 1
+fi
 
-  # mkbootimg Commandline .. take care
-  $TOOLBIN/mkbootimg --kernel $KERNELDIR/arch/arm/boot/kernel --ramdisk $INITRAMFS_TMP.img --cmdline "console=null androidboot.hardware=qcom user_debug=31 msm_rtb.filter=0x3F ehci-hcd.park=3" --base 0x80200000 --pagesize 2048 --ramdisk_offset 0x02000000 --output $KERNELDIR/boot.img
+## Build Modules
+nice -n 10 make -j8 modules 2>&1 | grcat conf.gcc
 
-  if [ -f $KERNELDIR/boot.img ];
-  then
-    echo " "
-    echo -e "${TXTGRN}Final Build: Stage 3 completed successfully!${TXTCLR}"
-    echo " "
-    rm $KERNELDIR/arch/arm/boot/kernel
+## Check exitcode for module build
+if [ "$?" == "0" ];
+then
+  echo -e "${TXTYLW}Modules Build done ...${TXTCLR}"
+  sleep 2
+else
+  echo -e "${BLDRED}Modules Build failed, exiting  ...${TXTCLR}"
+  # finished? get elapsed time
+  time_end=$(date +%s.%N)
+  echo -e "${BLDYLW}Total time elapsed: ${TXTGRN}$(echo "($time_end - $time_start) / 60"|bc ) ${TXTYLW}minutes${TXTGRN} ($(echo "$time_end - $time_start"|bc ) ${TXTYLW}seconds) ${TXTCLR}"
+  exit 1
+fi
 
-    # Archive Name for ODIN/CWM archives
-    ARCNAME="$KRNRLS-`date +%Y%m%d%H%M%S`"
+## Create Boot Image
+#
+# mkbootimg Commandline .. take care
+#
+echo " "
+echo -e "${TXTGRN}creating Boot Image (boot.img)!${TXTCLR}"
+$TOOLBIN/mkbootimg --kernel $KERNELDIR/arch/arm/boot/kernel --ramdisk $INITRAMFS_TMP.img --cmdline "console=null androidboot.hardware=qcom user_debug=31 msm_rtb.filter=0x3F ehci-hcd.park=3" --base 0x80200000 --pagesize 2048 --ramdisk_offset 0x02000000 --output $KERNELDIR/boot.img
 
-    ## Create ODIN Flashable TAR archiv ?
-    if [ "${ODIN_TAR}" == "yes" ];
-    then
-      echo -e "${BLDRED}creating ODIN-Flashable TAR: ${ARCNAME}${TXTCLR}"
-      cd $KERNELDIR
-      tar cf $RELEASEDIR/$ARCNAME.tar boot.img
-      echo -e "${BLDRED}$(ls -lh ${RELEASEDIR}/${ARCNAME}.tar)${TXTCLR}"
-    else
-      echo -e "${BLDRED}Skipping ODIN-TAR creation${TXTCLR}"
-      echo "   "
-    fi
-
-    ## Check for update template
-    if [ ! -f $RELEASEDIR/updater-template.zip ];
-    then
-      CWM_ZIP=no
-      echo -e "${BLDRED}Updater Template not found!${TXTCLR}"
-      echo "  "
-    fi
-
-    ## Create CWM-ZIP ?
-    if [ "${CWM_ZIP}" == "yes" ];
-    then
-      echo -e "${BLDRED}creating CWM-Flashable ZIP: ${ARCNAME}-CWM.zip${TXTCLR}"
-      cp $RELEASEDIR/updater-template.zip $RELEASEDIR/$ARCNAME-CWM.zip
-      zip -u $RELEASEDIR/$ARCNAME-CWM.zip boot.img
-      ls -lh $RELEASEDIR/$ARCNAME-CWM.zip
-      echo -e "${BLDRED}$(ls -lh ${RELEASEDIR}/${ARCNAME}-CWM.zip)${TXTCLR}"
-      echo -e "  "
-    else
-      echo -e "${BLDRED}Skipping CWM-ZIP creation${TXTCLR}"
-      echo "  "
-    fi
-    echo "  "
-    echo -e "${BLDGRN}	#############################	${TXTCLR}"
-    echo -e "${TXTRED}	# Script completed, exiting #	${TXTCLR}"
-    echo -e "${BLDGRN}	#############################	${TXTCLR}"
-    echo " "
-    # finished? get elapsed time
-    time_end=$(date +%s.%N)
-    echo -e "${BLDYLW}Total time elapsed: ${TCTCLR}${TXTGRN}$(echo "($time_end - $time_start) / 60"|bc ) ${TXTYLW}minutes${TXTGRN} ($(echo "$time_end - $time_start"|bc ) ${TXTYLW}seconds) ${TXTCLR}"
-    exit 0
-  else
-    echo " "
-    echo -e "${BLDRED}Final Build: Stage 3 failed with Error!${TXTCLR}"
-    echo -e "${BLDRED}failed to build Boot Image, exiting ...${TXTCLR}"
-    echo " "
-    # finished? get elapsed time
-    time_end=$(date +%s.%N)
-    echo -e "${BLDYLW}Total time elapsed: ${TCTCLR}${TXTGRN}$(echo "($time_end - $time_start) / 60"|bc ) ${TXTYLW}minutes${TXTGRN} ($(echo "$time_end - $time_start"|bc ) ${TXTYLW}seconds) ${TXTCLR}"
-    exit 1
-  fi
+## Check for boot.img
+#
+if [ -f $KERNELDIR/boot.img ];
+then
+  echo " "
+  echo -e "${TXTGRN}Boot Image sucessfully created...!${TXTCLR}"
+  echo " "
+  # Clean Up
+  rm $KERNELDIR/arch/arm/boot/kernel
+  rm -f $INITRAMFS_TMP.img
 else
   echo " "
   echo -e "${BLDRED}Final Build: Stage 2 failed with Error!${TXTCLR}"
-  echo -e "${BLDRED}failed to compile Kernel Image, exiting ...${TXTCLR}"
+  echo -e "${BLDRED}failed to create Boot Image, exiting ...${TXTCLR}"
   echo " "
   time_end=$(date +%s.%N)
-  echo -e "${BLDYLW}Total time elapsed: ${TCTCLR}${TXTGRN}$(echo "($time_end - $time_start) / 60"|bc ) ${TXTYLW}minutes${TXTGRN} ($(echo "$time_end - $time_start"|bc ) ${TXTYLW}seconds) ${TXTCLR}"
+  echo -e "${BLDYLW}Total time elapsed: ${TXTGRN}$(echo "($time_end - $time_start) / 60"|bc ) ${TXTYLW}minutes${TXTGRN} ($(echo "$time_end - $time_start"|bc ) ${TXTYLW}seconds) ${TXTCLR}"
   exit 1
 fi
+
+# Archive Name for ODIN/CWM/TWRP archives
+ARCNAME="$KRNRLS-`date +%Y%m%d%H%M%S`"
+
+## Create ODIN Flashable TAR archiv ? (Not supported for now)
+if [ "${ODIN_TAR}" == "yes" ];
+then
+  echo -e "${BLDRED}creating ODIN-Flashable TAR: ${ARCNAME}${TXTCLR}"
+  cd $KERNELDIR
+  tar cf $RELEASEDIR/$ARCNAME.tar boot.img
+  echo -e "${BLDRED}$(ls -lh ${RELEASEDIR}/${ARCNAME}.tar)${TXTCLR}"
+else
+  echo -e "${BLDRED}Skipping ODIN-TAR creation${TXTCLR}"
+  echo "   "
+fi
+
+## Check for update template (CWM/TWRP)
+if [ ! -d $UPDATER_TEMPLATE ];
+then
+  CWM_ZIP=no
+  echo -e "${BLDRED}Updater Template not found!${TXTCLR}"
+  echo "  "
+fi
+
+## Create CWM-ZIP ##
+if [ "${CWM_ZIP}" == "yes" ];
+then
+  ## Update ZIP template ##
+
+  # copy updater zip template files to tmp directory
+  #
+  echo "  "
+  echo -e "${TXTGRN}Copying update zip template to: ${UPDATER_TMP}${TXTCLR}"
+  cp -vax $UPDATER_TEMPLATE $UPDATER_TMP
+  sleep 1
+
+  # copy modules into update zip template
+  #
+  echo "  "
+  echo -e "${TXTGRN}Copying Modules to update zip template: ${UPDATER_TMP}/system/lib/modules${TXTCLR}"
+  mkdir -pv $UPDATER_TMP/system/lib/modules
+  find $KERNELDIR -name '*.ko' -exec cp -av {} $UPDATER_TMP/system/lib/modules/ \;
+  sleep 1
+
+  # Strip Modules
+  #
+  echo "  "
+  echo -e "${TXTGRN}Striping Modules to save space${TXTCLR}"
+  ${CROSS_COMPILE}strip --strip-unneeded $UPDATER_TMP/system/lib/modules/*
+  sleep 1
+
+  # Create Final ZIP
+  #
+  echo "  "
+  echo -e "${BLDRED}creating CWM-Flashable ZIP: ${ARCNAME}-CWM.zip${TXTCLR}"
+  cp $KERNELDIR/boot.img $UPDATER_TMP/boot.img
+  cd $UPDATER_TMP
+  zip -r $RELEASEDIR/$ARCNAME-CWM.zip *
+  cd $KERNELDIR
+  echo -e "${BLDRED}$(ls -lh ${RELEASEDIR}/${ARCNAME}-CWM.zip)${TXTCLR}"
+  echo -e "  "
+  # remove update template
+  rm -rf $UPDATER_TMP
+else
+  echo -e "${BLDRED}Skipping CWM-ZIP creation${TXTCLR}"
+  echo "  "
+fi
+
+# finished? get elapsed time
+time_end=$(date +%s.%N)
+echo "  "
+echo -e "${BLDGRN}	#############################	${TXTCLR}"
+echo -e "${TXTRED}	# Script completed, exiting #	${TXTCLR}"
+echo -e "${BLDGRN}	#############################	${TXTCLR}"
+echo " "
+echo -e "${BLDYLW}Total time elapsed: ${TXTGRN}$(echo "($time_end - $time_start) / 60"|bc ) ${TXTYLW}minutes${TXTGRN} ($(echo "$time_end - $time_start"|bc ) ${TXTYLW}seconds) ${TXTCLR}"
+exit 0
