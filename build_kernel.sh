@@ -13,26 +13,40 @@ TXTCLR='\e[0m'    		# Text Reset
 ## Settings
 #
 
+#
+## Version of this Build
+#
+## 1.0 for initial build
+KRNRLS="DreamKernel-GT-I9505-v1.0.5TW"
+
+#
 ## Create TAR File for ODIN?
+#
 ODIN_TAR=no		# yes/no (Currently disabled due modules not included in boot.img)
 
+#
 ## Create ZIP File for CWM? (needs a updater-template.zip in releasedir)
+#
 CWM_ZIP=yes		# yes/no
 
-##
+#
 ## Directory Settings
-##
+#
 export KERNELDIR=`readlink -f .`
 export TOOLBIN="${KERNELDIR}/../bin"
 export INITRAMFS_SOURCE="${KERNELDIR}/../initramfs"
 export INITRAMFS_TMP="/tmp/initramfs-i9505"
 export RELEASEDIR="${KERNELDIR}/../releases"
 
+#
 ## For CWM ZIP
+#
 export UPDATER_TEMPLATE=${KERNELDIR}/../releases/updater-template
 export UPDATER_TMP=/tmp/updater-template-i9505
 
-# Target Configs ...
+#
+## Target Configs ...
+#
 export DREAM_DEFCONF=dream_i9505_defconfig
 export ARCH_CONF=jf_eur_defconfig
 export SELINUX_CONF=jfselinux_defconfig
@@ -44,18 +58,13 @@ time_start=$(date +%s.%N)
 # InitRamFS Branch to use ...
 # export RAMFSBRANCH=cm10-testing
 
-# Build Hostname
+#
+## Build Hostname
+#
 export KBUILD_BUILD_HOST=`hostname | sed 's|ip-projects.de|dream-irc.com|g'`
 
 #
-# Version of this Build
-#
-## 1.0 for initial build
-KRNRLS="DreamKernel-GT-I9505-v1.0.5TW"
-
-
-#
-# Target Settings
+## Target Settings
 #
 export ARCH=arm
 export CROSS_COMPILE=/home/talustus/arm-galaxys4-androideabi-dev/bin/galaxys4-
