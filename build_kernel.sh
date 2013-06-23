@@ -17,7 +17,7 @@ TXTCLR='\e[0m'    		# Text Reset
 ## Version of this Build
 #
 ## 1.0 for initial build
-KRNRLS="DreamKernel-GT-I9505-v1.0.0-CM10.1"
+KRNRLS="DreamKernel-GT-I9505-v1.0.1-CM10.1"
 
 #
 ## Create TAR File for ODIN?
@@ -67,8 +67,19 @@ export KBUILD_BUILD_HOST=`hostname | sed 's|root001-amd64|root001-amd64.dream-ir
 ## Target Settings
 #
 export ARCH=arm
-export CROSS_COMPILE=/home/talustus/arm-galaxys4-androideabi-dev/bin/galaxys4-
 export USE_SEC_FIPS_MODE=true
+export USE_CCACHE=1
+
+# Choose Propper Compiler setup
+if [ "${USE_CCACHE}" == "1" ];
+then
+  echo -e "${TXTGRN}Using ccache Compiler Cache ..${TXTCLR}"
+  export CROSS_COMPILE="ccache /home/talustus/arm-galaxys4-androideabi-dev/bin/galaxys4-"
+else
+  echo -e "${TXTYLW}NOT using ccache Compiler Cache ..${TXTCLR}"
+  export CROSS_COMPILE="/home/talustus/arm-galaxys4-androideabi-dev/bin/galaxys4-"
+fi
+
 
 if [ "${1}" != "" ];
 then
