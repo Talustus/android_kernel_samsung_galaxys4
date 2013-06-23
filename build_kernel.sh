@@ -17,7 +17,7 @@ TXTCLR='\e[0m'    		# Text Reset
 ## Version of this Build
 #
 ## 1.0 for initial build
-KRNRLS="DreamKernel-GT-I9505-v1.0.1-CM10.1"
+KRNRLS="DreamKernel-GT-I9505-v1.0.2-CM10.1"
 
 #
 ## Create TAR File for ODIN?
