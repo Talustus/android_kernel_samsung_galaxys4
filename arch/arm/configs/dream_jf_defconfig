@@ -705,7 +705,7 @@ CONFIG_KEYS_DEBUG_PROC_KEYS=y
 # Fork hang detection
 # CONFIG_SEC_FORKHANG_DEBUG is not set
 
-CONFIG_LOCALVERSION="-Dreamkernel-GT-I9505-v1.0.2-CM10.1_VDD-OC2"
+CONFIG_LOCALVERSION="-Dreamkernel-GT-I9505-v1.0.4-CM10.1"
 # CONFIG_LOCALVERSION_AUTO is not set
 CONFIG_CROSS_COMPILE="ccache /home/talustus/arm-galaxys4-androideabi-dev/bin/galaxys4-"
 # CONFIG_CPU_FREQ_DEFAULT_GOV_PERFORMANCE is not set
