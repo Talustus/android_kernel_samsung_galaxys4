@@ -2038,6 +2038,8 @@ config CP_ACCESS
 
 	  If unsure, say N.
 
+source "arch/arm/mvp/Kconfig"
+
 endmenu
 
 menu "Boot options"
