@@ -9,6 +9,7 @@ BLDRED='\e[1;31m' 		# Red-Bold
 BLDGRN='\e[1;32m' 		# Green-Bold
 BLDYLW='\e[1;33m' 		# Yellow-Bold
 TXTCLR='\e[0m'    		# Text Reset
+
 #
 ## Settings
 #
@@ -17,7 +18,7 @@ TXTCLR='\e[0m'    		# Text Reset
 ## Version of this Build
 #
 ## 1.0 for initial build
-KRNRLS="DreamKernel-GT-I9505-v1.0.5-CM10.1"
+KRNRLS="DreamKernel-GT-I9505-v1.0.7a-CM10.1"
 
 #
 ## Create TAR File for ODIN?
@@ -33,7 +34,7 @@ CWM_ZIP=yes		# yes/no
 ## Directory Settings
 #
 export KERNELDIR=`readlink -f .`
-export TOOLBIN="${KERNELDIR}/../bin"
+export TOOLBIN="${KERNELDIR}/../../bin"
 export INITRAMFS_SOURCE="${KERNELDIR}/../initramfs-cm10.1"
 export INITRAMFS_TMP="/tmp/initramfs-i9505_cm101"
 export RELEASEDIR="${KERNELDIR}/../releases"
@@ -61,7 +62,7 @@ time_start=$(date +%s.%N)
 #
 ## Build Hostname
 #
-export KBUILD_BUILD_HOST=`hostname | sed 's|root001-amd64|root001-amd64.dream-irc.com|g'`
+export KBUILD_BUILD_HOST=`hostname | sed 's|boris|build001.AU.dream-irc.com|g'`
 
 #
 ## Target Settings
@@ -74,10 +75,11 @@ export USE_CCACHE=1
 if [ "${USE_CCACHE}" == "1" ];
 then
   echo -e "${TXTGRN}Using ccache Compiler Cache ..${TXTCLR}"
-  export CROSS_COMPILE="ccache /home/talustus/arm-galaxys4-androideabi-dev/bin/galaxys4-"
+  export CCACHE_DIR="${KERNELDIR}/../../.ccache"
+  export CROSS_COMPILE="ccache galaxys4-"
 else
   echo -e "${TXTYLW}NOT using ccache Compiler Cache ..${TXTCLR}"
-  export CROSS_COMPILE="/home/talustus/arm-galaxys4-androideabi-dev/bin/galaxys4-"
+  export CROSS_COMPILE="galaxys4-"
 fi
 
 
@@ -98,7 +100,9 @@ then
 fi
 
 # make sure we have no stale config
-make -j3 distclean 2>&1 | grcat conf.gcc
+# U may want to comment it for testing things ...
+#
+make -j4 distclean 2>&1 | ${TOOLBIN}/grcat conf.gcc
 
 if [ ! -f $KERNELDIR/.config ];
 then
@@ -117,7 +121,7 @@ then
   fi
   echo -e "${TXTYLW}Creating Kernel config from default: ${DREAM_DEFCONF} ${TXTCLR}"
   # make ARCH=arm VARIANT_DEFCONFIG=${ARCH_CONF} SELINUX_DEFCONFIG=${SELINUX_CONF} SELINUX_LOG_DEFCONFIG=${SELINUX_LOGCONF} ${DREAM_DEFCONF}  2>&1 | grcat conf.gcc
-  make ARCH=arm VARIANT_DEFCONFIG=${ARCH_CONF} SELINUX_DEFCONFIG=${SELINUX_CONF} ${DREAM_DEFCONF}  2>&1 | grcat conf.gcc
+  make ARCH=arm VARIANT_DEFCONFIG=${ARCH_CONF} SELINUX_DEFCONFIG=${SELINUX_CONF} ${DREAM_DEFCONF}  2>&1 | ${TOOLBIN}/grcat conf.gcc
   echo -e "${TXTYLW}Kernel config created ...${TXTCLR}"
 fi
 
@@ -126,7 +130,7 @@ fi
 # remove Files of old/previous Builds
 #
 echo -e "${TXTYLW}Deleting Files of previous Builds ...${TXTCLR}"
-# make -j3 clean 2>&1 | grcat conf.gcc
+# make -j4 clean 2>&1 | grcat conf.gcc
 # echo "0" > $KERNELDIR/.version
 
 # Remove Old initramfs/updater template
@@ -205,7 +209,7 @@ rm -f $INITRAMFS_TMP.cpio
 echo -e "${TXTYLW}Starting final Build: Stage 2${TXTCLR}"
 
 ## Build zImage
-nice -n 10 make -j3 zImage 2>&1 | grcat conf.gcc
+nice -n 10 make -j4 zImage 2>&1 | ${TOOLBIN}/grcat conf.gcc
 
 if [ -f  $KERNELDIR/arch/arm/boot/zImage ];
 then
@@ -227,7 +231,7 @@ else
 fi
 
 ## Build Modules
-nice -n 10 make -j3 modules 2>&1 | grcat conf.gcc
+nice -n 10 make -j4 modules 2>&1 | ${TOOLBIN}/grcat conf.gcc
 
 ## Check exitcode for module build
 if [ "$?" == "0" ];
