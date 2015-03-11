@@ -149,6 +149,4 @@ obj-$(CONFIG_IRDA_MC96)		+= irda/
 
 obj-$(CONFIG_AUTHENTEC_VPNCLIENT_INTERCEPTOR) += interceptor/
 
-obj-$(CONFIG_FELICA) += felica/
-obj-y   			+= exfat/
-
+obj-$(CONFIG_FELICA) 		+= felica/

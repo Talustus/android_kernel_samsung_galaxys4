@@ -1,0 +1,8 @@
+config EXFAT_FS
+	tristate "EXFAT file system support"
+	help
+	  EXFAT is a propritary file system of Microsoft Windows XP, 2003, Vista, Seven... .
+
+	  Saying Y or M here enables EXFAT support.
+	  This Kernel module is a leaked one and possibly not licensed under GPL...
+	  Use with care ...
